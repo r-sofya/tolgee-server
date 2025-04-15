@@ -1,38 +1,16 @@
-FROM postgres:13.20-alpine3.21
+# ✅ Stage 1: Build with Java 21
+FROM eclipse-temurin:21 AS build
 
-ENTRYPOINT []
+WORKDIR /app
+COPY . .
 
-RUN apk --no-cache add openjdk21
-RUN apk --no-cache add "libxml2>=2.13.4-r5"
+RUN ./gradlew clean build -x check -x test
 
-#############
-### Tolgee  #
-#############
+# ✅ Stage 2: Run the app
+FROM eclipse-temurin:21
 
-# Expose application port
+WORKDIR /app
+COPY --from=build /app/server-app/build/libs/server-app*.jar ./tolgee-server.jar
+
 EXPOSE 8080
-
-# Define persistent volume for data storage
-VOLUME /data
-
-# Environment variables for configuration
-ENV HEALTHCHECK_PORT=8080 \
-    spring_profiles_active=docker
-
-# Copy necessary application files
-COPY BOOT-INF/lib /app/lib
-COPY META-INF /app/META-INF
-COPY BOOT-INF/classes /app
-COPY --chmod=755 cmd.sh /app
-
-#################
-### Let's go   ##
-#################
-
-# Define the startup command
-ENTRYPOINT ["/app/cmd.sh"]
-
-
-# Health check to ensure the app is up and running
-HEALTHCHECK --interval=10s --timeout=3s --retries=20 \
-    CMD wget --spider -q "http://127.0.0.1:$HEALTHCHECK_PORT/actuator/health" || exit 1
+CMD ["java", "-jar", "tolgee-server.jar"]
