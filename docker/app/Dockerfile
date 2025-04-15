@@ -1,18 +1,17 @@
-# 🧱 Build Stage with Java 21
 FROM eclipse-temurin:21 AS build
 
 WORKDIR /app
 COPY . .
 
-# 🛠️ Force Gradle to use local JDK, not toolchains
-ENV ORG_GRADLE_PROJECT_javaToolchain=21
+# 🔧 Use the JDK already installed, not Gradle toolchain auto-detection
 ENV JAVA_HOME=/opt/java/openjdk
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
+ENV ORG_GRADLE_PROJECT_javaToolchain=21
+ENV ORG_GRADLE_PROJECT_toogleeUseToolchains=false
 
-# 🔨 Build without needing toolchain auto-download
 RUN ./gradlew clean build -x check -x test --no-daemon
 
-# 🏁 Final Stage: Run the app
+# 🔁 Runtime
 FROM eclipse-temurin:21
 
 WORKDIR /app
