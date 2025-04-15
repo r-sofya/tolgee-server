@@ -1,22 +1,13 @@
-FROM eclipse-temurin:21 AS build
-
-WORKDIR /app
-COPY . .
-
-# 🔧 Use the JDK already installed, not Gradle toolchain auto-detection
-ENV JAVA_HOME=/opt/java/openjdk
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
-ENV ORG_GRADLE_PROJECT_javaToolchain=21
-ENV ORG_GRADLE_PROJECT_toogleeUseToolchains=false
-
-RUN ./gradlew clean build -x check -x test --no-daemon
-
-# 🔁 Runtime
+# ✅ Use Java 21
 FROM eclipse-temurin:21
 
 WORKDIR /app
-COPY --from=build /app/server-app/build/libs/server-app*.jar ./tolgee-server.jar
 
+# ✅ Download the prebuilt latest Tolgee server JAR
+ADD https://github.com/tolgee/tolgee/releases/latest/download/tolgee-app.jar ./tolgee-server.jar
+
+# ✅ Optional: Expose the default port
 EXPOSE 8080
 
+# ✅ Start Tolgee
 CMD ["java", "-jar", "tolgee-server.jar"]
